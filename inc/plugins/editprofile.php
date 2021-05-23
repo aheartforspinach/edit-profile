@@ -17,6 +17,17 @@ function editprofile_info()
 function editprofile_install()
 {
     global $db;
+    // database
+    if ($db->engine == 'mysql' || $db->engine == 'mysqli') {
+        $db->query("CREATE TABLE `" . TABLE_PREFIX . "editprofile` (
+        `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+        `pid` int(11) DEFAULT NULL,
+        `uid` int(11) DEFAULT NULL,
+        `message` text,
+        `editreason` varchar(11) DEFAULT NULL,
+        PRIMARY KEY (`id`)
+        ) ENGINE=MyISAM" . $db->build_create_table_collation());
+    }
 
     //Einstellungen 
     $setting_group = array(
@@ -40,7 +51,7 @@ function editprofile_install()
             'description' => 'Dürfen Teammitglieder ihre eigenen Steckbriefe annehmen?',
             'optionscode' => 'yesno',
             'value' => 0,
-            'disporder' => 1
+            'disporder' => 2
         )
     );
 
@@ -114,7 +125,7 @@ function editprofile_install()
 
     $insert_array = array(
         'title'        => 'editprofile_modcp_nav',
-        'template'    => $db->escape_string('<tr><td class="trow1 smalltext"><a href="modcp.php?action=steckichanges" class="modcp_nav_item">Steckbriefänderungen</a></td></tr>'),
+        'template'    => $db->escape_string('<tr><td class="trow1 smalltext"><a href="modcp.php?action=editprofile" class="modcp_nav_item">Steckbriefänderungen</a></td></tr>'),
         'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
@@ -193,7 +204,7 @@ function editprofile_install()
 
 			<br><br>
 			<center>
-			<form method="post" action="modcp.php?action=steckichanges">
+			<form method="post" action="modcp.php?action=editprofile">
 			<input name="id" value="{$id}" type="hidden" />
 			<input name="type" value="{$type}" type="hidden" />
 			<input placeholder="Grund der Ablehnung" name="decline_reason" class="textbox" type="text" />
@@ -217,7 +228,7 @@ function editprofile_install()
     <td>{$character}</td>
     <td>{$reason}</td>
     <td>
-        <form method="post" action="modcp.php?action=steckichanges">
+        <form method="post" action="modcp.php?action=editprofile">
             <input name="id" value="{$id}" type="hidden" />
             <input name="type" value="{$type}" type="hidden" />
             <input placeholder="Grund der Ablehnung" name="decline_reason" class="textbox" type="text" />
@@ -281,6 +292,8 @@ function editprofile_uninstall()
     $db->delete_query("templategroups", 'prefix = "editprofile"');
     $db->delete_query("templates", "title LIKE 'editprofile%'");
 
+    if($db->table_exists('editprofile')) $db->drop_table('editprofile');
+
     require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
 	$db->delete_query("themestylesheets", "name = 'editprofile.css'");
 	$query = $db->simple_select("themes", "tid");
@@ -295,7 +308,7 @@ function editprofile_activate()
 {
     global $db, $cache;
     include MYBB_ROOT . "/inc/adminfunctions_templates.php";
-    find_replace_templatesets("header", "#" . preg_quote('{$awaitingusers}') . "#i", '{$awaitingusers} {$steckichangesbanner}');
+    find_replace_templatesets("header", "#" . preg_quote('{$awaitingusers}') . "#i", '{$awaitingusers} {$editprofilebanner}');
     find_replace_templatesets("modcp_nav_users", "#" . preg_quote('{$nav_ipsearch}') . "#i", '{$nav_ipsearch}{$nav_editprofile}');
 
     if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
@@ -314,7 +327,7 @@ function editprofile_deactivate()
 {
     global $db, $mybb;
     include MYBB_ROOT . "/inc/adminfunctions_templates.php";
-    find_replace_templatesets("header", "#" . preg_quote('{$steckichangesbanner}') . "#i", '', 0);
+    find_replace_templatesets("header", "#" . preg_quote('{$editprofilebanner}') . "#i", '', 0);
     find_replace_templatesets("modcp_nav_users", "#" . preg_quote('{$nav_editprofile}') . "#i", '', 0);
 
     if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
@@ -343,15 +356,15 @@ function editprofile_postbit(&$post) {
 $plugins->add_hook('global_start', 'editprofile_global_start');
 function editprofile_global_start()
 {
-    global $mybb, $templates, $db, $steckichangesbanner;
+    global $mybb, $templates, $db, $editprofilebanner;
     if ($mybb->usergroup['canmodcp'] == 0) return;
 
     $teamiesCanSeeOwn = intval($mybb->settings['editprofile_teamie']) == 0 ? 'not find_in_set(uid, "' . awayice_getUids($mybb->user['uid']) . '")' : '';
-    $num_row = $db->num_rows($db->simple_select('steckichanges', '*', $teamiesCanSeeOwn));
+    $num_row = $db->num_rows($db->simple_select('editprofile', '*', $teamiesCanSeeOwn));
     if ($num_row > 0) {
         $type = 'warning';
-        $text = 'Es gibt <a href="modcp.php?action=steckichanges">neue Anträge</a> auf Steckbriefänderungen';
-        eval("\$steckichangesbanner = \"" . $templates->get('editprofile_banner') . "\";");
+        $text = 'Es gibt <a href="modcp.php?action=editprofile">neue Anträge</a> auf Steckbriefänderungen';
+        eval("\$editprofilebanner = \"" . $templates->get('editprofile_banner') . "\";");
     }
 }
 
@@ -370,12 +383,12 @@ function editprofile_modcp()
 {
     global $mybb, $db, $lang, $templates, $headerinclude, $header, $footer, $modcp_nav, $theme, $changes;
 
-    if ($mybb->get_input('action') != 'steckichanges') return;
+    if ($mybb->get_input('action') != 'editprofile') return;
 
     // save changes
     if ($_POST['accept'] == 'true') {
         $id = $db->escape_string($_POST['id']);
-        $change = $db->fetch_array($db->simple_select('steckichanges', '*', 'id = ' . $id));
+        $change = $db->fetch_array($db->simple_select('editprofile', '*', 'id = ' . $id));
 
         // alert stuff
         if (function_exists('myalerts_is_activated') && myalerts_is_activated()) {
@@ -396,7 +409,7 @@ function editprofile_modcp()
         }
 
         $db->update_query('posts', array('message' => $db->escape_string($change['message'])), 'pid = ' . $change['pid']);
-        $db->delete_query('steckichanges', 'id = ' . $id);
+        $db->delete_query('editprofile', 'id = ' . $id);
         $type = 'success';
         $text = 'Die Änderungen wurden akzeptiert';
         eval("\$banner = \"" . $templates->get('editprofile_banner') . "\";");
@@ -404,7 +417,7 @@ function editprofile_modcp()
 
     if ($_POST['accept'] == 'false') {
         $id = $db->escape_string($_POST['id']);
-        $change = $db->fetch_array($db->simple_select('steckichanges', '*', 'id = ' . $id));
+        $change = $db->fetch_array($db->simple_select('editprofile', '*', 'id = ' . $id));
         $message = 'Hallo!
     
     Leider musste ich deine Anfrage auf Steckbriefänderung aus folgenden Grund ablehnen:
@@ -417,11 +430,11 @@ function editprofile_modcp()
         $type = 'success';
         $text = 'Die Steckbriefänderung wurde abgelehnt';
         eval("\$banner = \"" . $templates->get('editprofile_banner') . "\";");
-        $db->delete_query('steckichanges', 'id = ' . $id);
+        $db->delete_query('editprofile', 'id = ' . $id);
     }
 
     $teamiesCanSeeOwn = intval($mybb->settings['editprofile_teamie']) == 0 ? 'not find_in_set(uid, "' . awayice_getUids($mybb->user['uid']) . '")' : '';
-    $query = $db->simple_select('steckichanges', '*', $teamiesCanSeeOwn);
+    $query = $db->simple_select('editprofile', '*', $teamiesCanSeeOwn);
     while ($row = $db->fetch_array($query)) {
         $character = '<a href="misc.php?action=editstecki_overview&id=' . $row['id'] . '">' . get_user($row['uid'])['username'] . '</a>';
         $reason = $row['editreason'];
@@ -442,7 +455,7 @@ function editprofile_do_editpost()
 
     if (!in_array($post['fid'], $applicationArea)) return;
 
-    $db->insert_query('steckichanges', array(
+    $db->insert_query('editprofile', array(
         'uid' => $post['uid'],
         'message' => $db->escape_string($mybb->get_input('message')),
         'editreason' => $mybb->get_input('editreason'),
@@ -461,7 +474,7 @@ function editprofile_editpost_start()
     $post = get_post($mybb->get_input('pid'));
     if (!in_array($post['fid'], $applicationArea)) return;
 
-    $num_row = $db->num_rows($db->simple_select('steckichanges', 'id', 'pid = ' . $post['pid']));
+    $num_row = $db->num_rows($db->simple_select('editprofile', 'id', 'pid = ' . $post['pid']));
     if ($num_row > 0) {
         redirect('misc.php?action=editstecki', 'Du wirst weitergeleitet');
         die();
@@ -484,7 +497,7 @@ function editprofile_misc()
     // show when teammember want to see changes
     if ($_GET['action'] == 'editstecki_overview') {
         if ($mybb->usergroup['canmodcp'] == 0) error_no_permission();
-        $change = $db->fetch_array($db->simple_select('steckichanges', '*', 'id = ' . $mybb->get_input('id')));
+        $change = $db->fetch_array($db->simple_select('editprofile', '*', 'id = ' . $mybb->get_input('id')));
         $character = get_user($change['uid'])['username'];
         $id = $mybb->get_input('id');
         $reason = $change['editreason'];
