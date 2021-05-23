@@ -280,6 +280,14 @@ function editprofile_uninstall()
     $db->delete_query('settinggroups', "name = 'editprofile'");
     $db->delete_query("templategroups", 'prefix = "editprofile"');
     $db->delete_query("templates", "title LIKE 'editprofile%'");
+
+    require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+	$db->delete_query("themestylesheets", "name = 'editprofile.css'");
+	$query = $db->simple_select("themes", "tid");
+	while($theme = $db->fetch_array($query)) {
+		update_theme_stylesheet_list($theme['tid']);
+	}
+
     rebuild_settings();
 }
 
