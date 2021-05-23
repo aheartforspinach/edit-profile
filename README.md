@@ -14,6 +14,9 @@ __Funktionen für Admins__
 * Annahme von Änderungen
 * Ablehnung von Änderungen mit einem Grund
 
+## Externe Bibliothek
+thanks to Kate Rose Morley for the diff implementation [source](https://code.iamkate.com/php/diff-implementation/)
+
 ## Voraussetzungen
 keine
 
