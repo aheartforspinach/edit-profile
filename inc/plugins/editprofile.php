@@ -84,16 +84,13 @@ function editprofile_install()
     background-color: #e3bbbb;
     border: 1px solid #956666;
 }
-
 .diffInserted {
     background-color: #acddac;
     border: 1px solid #54a854;
 }
-
 .diff {
     background-color: #f2f2f2;
 }
-
 .diff td {
     vertical-align: top;
     white-space: pre;
@@ -135,7 +132,6 @@ function editprofile_install()
     $insert_array = array(
         'title'        => 'editprofile_modcp',
         'template'    => $db->escape_string('<html>
-
         <head>
             <title>{$mybb->settings[\'bbname\']} - Steckbriefe freischalten</title>
             {$headerinclude}
@@ -201,10 +197,9 @@ function editprofile_install()
 			<center><b>Grund:</b> {$reason}<br>			rot: gelöscht, grün: hinzugefügt</center><br><br>
 			
 			<div style="white-space: pre-line;">{$output}</div>
-
 			<br><br>
 			<center>
-			<form method="post" action="modcp.php?action=editprofile">
+			<form method="post" action="modcp.php?action=steckichanges">
 			<input name="id" value="{$id}" type="hidden" />
 			<input name="type" value="{$type}" type="hidden" />
 			<input placeholder="Grund der Ablehnung" name="decline_reason" class="textbox" type="text" />
@@ -363,7 +358,7 @@ function editprofile_global_start()
     $num_row = $db->num_rows($db->simple_select('editprofile', '*', $teamiesCanSeeOwn));
     if ($num_row > 0) {
         $type = 'warning';
-        $text = 'Es gibt <a href="modcp.php?action=editprofile">neue Anträge</a> auf Steckbriefänderungen';
+        $text = 'Es gibt <a href="modcp.php?action=steckichanges">neue Anträge</a> auf Steckbriefänderungen';
         eval("\$editprofilebanner = \"" . $templates->get('editprofile_banner') . "\";");
     }
 }
