@@ -125,7 +125,7 @@ function editprofile_install()
 
     $insert_array = array(
         'title'        => 'editprofile_modcp_nav',
-        'template'    => $db->escape_string('<tr><td class="trow1 smalltext"><a href="modcp.php?action=editprofile" class="modcp_nav_item">Steckbriefänderungen</a></td></tr>'),
+        'template'    => $db->escape_string('<tr><td class="trow1 smalltext"><a href="modcp.php?action=steckichanges" class="modcp_nav_item">Steckbriefänderungen</a></td></tr>'),
         'sid'        => '-2',
         'version'    => '',
         'dateline'    => TIME_NOW
@@ -383,7 +383,7 @@ function editprofile_modcp()
 {
     global $mybb, $db, $lang, $templates, $headerinclude, $header, $footer, $modcp_nav, $theme, $changes;
 
-    if ($mybb->get_input('action') != 'editprofile') return;
+    if ($mybb->get_input('action') != 'steckichanges') return;
 
     // save changes
     if ($_POST['accept'] == 'true') {
