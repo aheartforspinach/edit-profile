@@ -223,7 +223,7 @@ function editprofile_install()
     <td>{$character}</td>
     <td>{$reason}</td>
     <td>
-        <form method="post" action="modcp.php?action=editprofile">
+        <form method="post" action="modcp.php?action=steckichanges">
             <input name="id" value="{$id}" type="hidden" />
             <input name="type" value="{$type}" type="hidden" />
             <input placeholder="Grund der Ablehnung" name="decline_reason" class="textbox" type="text" />
