@@ -23,7 +23,7 @@ function editprofile_install()
         `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
         `pid` int(11) DEFAULT NULL,
         `uid` int(11) DEFAULT NULL,
-        `message` text,
+        `message` longtext,
         `editreason` varchar(128) DEFAULT NULL,
         PRIMARY KEY (`id`)
         ) ENGINE=MyISAM" . $db->build_create_table_collation());
