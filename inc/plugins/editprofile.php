@@ -354,7 +354,7 @@ function editprofile_global_start()
     global $mybb, $templates, $db, $editprofilebanner;
     if ($mybb->usergroup['canmodcp'] == 0) return;
 
-    $teamiesCanSeeOwn = intval($mybb->settings['editprofile_teamie']) == 0 ? 'not find_in_set(uid, "' . awayice_getUids($mybb->user['uid']) . '")' : '';
+    $teamiesCanSeeOwn = intval($mybb->settings['editprofile_teamie']) == 0 ? 'not find_in_set(uid, "' . editprofile_getUids($mybb->user['uid']) . '")' : '';
     $num_row = $db->num_rows($db->simple_select('editprofile', '*', $teamiesCanSeeOwn));
     if ($num_row > 0) {
         $type = 'warning';
@@ -428,7 +428,7 @@ function editprofile_modcp()
         $db->delete_query('editprofile', 'id = ' . $id);
     }
 
-    $teamiesCanSeeOwn = intval($mybb->settings['editprofile_teamie']) == 0 ? 'not find_in_set(uid, "' . awayice_getUids($mybb->user['uid']) . '")' : '';
+    $teamiesCanSeeOwn = intval($mybb->settings['editprofile_teamie']) == 0 ? 'not find_in_set(uid, "' . editprofile_getUids($mybb->user['uid']) . '")' : '';
     $query = $db->simple_select('editprofile', '*', $teamiesCanSeeOwn);
     while ($row = $db->fetch_array($query)) {
         $character = '<a href="misc.php?action=editstecki_overview&id=' . $row['id'] . '">' . get_user($row['uid'])['username'] . '</a>';
@@ -562,4 +562,17 @@ function editprofile_myalerts()
         $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
         $formatterManager->registerFormatter(new EditProfile_AlertFormatter($mybb, $lang, 'accept_steckichange'));
     }
+}
+
+function editprofile_getUids($uid) {
+    global $db, $mybb;
+    if($mybb->user['uid'] == 0) return array();
+    $return = array();
+    $user = get_user($uid);
+    $mainUid = $user['as_uid'] != 0 ? $user['as_uid'] : $uid;
+    $other_uids = $db->simple_select('users', 'uid', 'as_uid = ' . $mainUid . ' or uid = '. $mainUid);
+    while ($other = $db->fetch_array($other_uids)) {
+        array_push($return, $other['uid']);
+    }
+    return implode(',', $return);
 }
