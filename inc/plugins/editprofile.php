@@ -29,7 +29,7 @@ function editprofile_install()
         ) ENGINE=MyISAM" . $db->build_create_table_collation());
     }
 
-    //Einstellungen 
+    // settings 
     $setting_group = array(
         'name' => 'editprofile',
         'title' => 'Steckbrief bearbeiten',
@@ -43,7 +43,7 @@ function editprofile_install()
             'title' => 'Foren',
             'description' => 'In welchen Foren soll eine Überprüfung stattfinden?',
             'optionscode' => 'forumselect',
-            'value' => -1,
+            'value' => 0,
             'disporder' => 1
         ),
         'editprofile_teamie' => array(
@@ -191,8 +191,6 @@ function editprofile_install()
         </head>
         <body>
         {$header}
-        <div class="panel" id="panel">
-			<div id="panel">$menu</div>
 			<h1>Änderung von {$character}</h1>
 			<center><b>Grund:</b> {$reason}<br>			rot: gelöscht, grün: hinzugefügt</center><br><br>
 			
@@ -207,7 +205,6 @@ function editprofile_install()
             <button type="submit" name="accept" value="true" title="Annehmen" class="button">Annehmen</button>
 		</form>
 			</center>
-		</div>
         {$footer}
         </body>
 </html>'),
@@ -275,8 +272,8 @@ function editprofile_install()
 
 function editprofile_is_installed()
 {
-    global $mybb;
-    return isset($mybb->settings['editprofile_forum']) ? true : false;
+    global $db;
+    return $db->table_exists('editprofile');
 }
 
 function editprofile_uninstall()
@@ -333,7 +330,7 @@ function editprofile_deactivate()
 }
 
 // 
-// 
+// add edit profile button
 // 
 $plugins->add_hook('postbit', 'editprofile_postbit');
 function editprofile_postbit(&$post) {
@@ -380,8 +377,10 @@ function editprofile_modcp()
 
     if ($mybb->get_input('action') != 'steckichanges') return;
 
+    $banner = '';
+
     // save changes
-    if ($_POST['accept'] == 'true') {
+    if ($mybb->get_input('accept', MyBB::INPUT_STRING) == 'true') {
         $id = $db->escape_string($_POST['id']);
         $change = $db->fetch_array($db->simple_select('editprofile', '*', 'id = ' . $id));
 
@@ -410,7 +409,7 @@ function editprofile_modcp()
         eval("\$banner = \"" . $templates->get('editprofile_banner') . "\";");
     }
 
-    if ($_POST['accept'] == 'false') {
+    if ($mybb->get_input('accept', MyBB::INPUT_STRING) == 'false') {
         $id = $db->escape_string($_POST['id']);
         $change = $db->fetch_array($db->simple_select('editprofile', '*', 'id = ' . $id));
         $message = 'Hallo!
@@ -483,14 +482,14 @@ function editprofile_misc()
     global $lang, $db, $mybb, $templates, $theme, $headerinclude, $header, $footer;
 
     // show when stecki file has already unapproved submits
-    if ($_GET['action'] == 'editstecki') {
+    if ($mybb->get_input('action', MyBB::INPUT_STRING) == 'editstecki') {
         $text = 'Deine Änderungen wurden eingetragen und werden bald von einem Teammitglied freigeschaltet.';
         eval("\$page = \"" . $templates->get('editprofile_unapprovededit') . "\";");
         output_page($page);
     }
 
     // show when teammember want to see changes
-    if ($_GET['action'] == 'editstecki_overview') {
+    if ($mybb->get_input('action', MyBB::INPUT_STRING) == 'editstecki_overview') {
         if ($mybb->usergroup['canmodcp'] == 0) error_no_permission();
         $change = $db->fetch_array($db->simple_select('editprofile', '*', 'id = ' . $mybb->get_input('id')));
         $character = get_user($change['uid'])['username'];
